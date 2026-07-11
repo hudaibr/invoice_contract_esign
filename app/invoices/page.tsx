@@ -4,7 +4,8 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { branding } from "@/lib/branding";
 import type { InvoiceData, InvoiceLineItem } from "@/lib/types";
-import { Plus, Trash2, Download } from "lucide-react";
+import { Plus, Trash2, Download, LogOut } from "lucide-react";
+import { signOutAction } from "@/lib/actions";
 
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
@@ -91,9 +92,16 @@ export default function InvoicesPage() {
               <p className="text-sm text-neutral-500">{branding.agencyName}</p>
             </div>
           </div>
-          <a href="/contracts" className="text-sm text-[#3FBB43] hover:underline">
-            Go to Contracts →
-          </a>
+          <div className="flex items-center gap-4">
+            <a href="/contracts" className="text-sm text-[#3FBB43] hover:underline">
+              Go to Contracts →
+            </a>
+            <form action={signOutAction}>
+              <button className="text-sm text-neutral-400 hover:text-red-500 flex items-center gap-1">
+                <LogOut size={14} /> Sign Out
+              </button>
+            </form>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
