@@ -121,7 +121,7 @@ export function InvoicePDF({ data }: { data: InvoiceData }) {
           </View>
           {data.taxRate > 0 && (
             <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Tax ({data.taxRate}%)</Text>
+              <Text style={styles.totalsLabel}>Sales Tax ({data.taxRate}%)</Text>
               <Text>{money(taxAmount)}</Text>
             </View>
           )}

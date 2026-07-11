@@ -103,7 +103,7 @@ export default function InvoicesPage() {
               <Field label="Invoice #">
                 <input className="input" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
               </Field>
-              <Field label="Tax Rate (%)">
+              <Field label="Sales Tax (%)">
                 <input
                   type="number"
                   className="input"

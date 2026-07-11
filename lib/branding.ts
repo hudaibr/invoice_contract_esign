@@ -27,7 +27,7 @@ export const branding = {
   },
 
   invoice: {
-    defaultTaxRate: 0, // percentage, e.g. 5 for 5%
+    defaultTaxRate: 8.25, // percentage, e.g. 5 for 5%
     defaultDueDays: 14,
     footerNote: "Thank you for your business! Payment is due within the terms above.",
   },
