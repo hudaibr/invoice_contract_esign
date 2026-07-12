@@ -6,6 +6,7 @@ import { branding } from "@/lib/branding";
 import type { InvoiceData, InvoiceLineItem } from "@/lib/types";
 import { Plus, Trash2, Download, LogOut } from "lucide-react";
 import { signOutAction } from "@/lib/actions";
+import { logToCRM } from "@/lib/crm";
 
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
@@ -41,7 +42,7 @@ export default function InvoicesPage() {
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("Bank Transfer / PayPal");
+  const [paymentMethod, setPaymentMethod] = useState("Paypal");
   const [notes, setNotes] = useState("");
   const [taxRate, setTaxRate] = useState(branding.invoice.defaultTaxRate);
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([
@@ -145,7 +146,7 @@ export default function InvoicesPage() {
               <Field label="Client Phone">
                 <input className="input" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} />
               </Field>
-              <Field label="Client Address">
+              <Field label="Client Address (optional)">
                 <textarea className="input" rows={2} value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} />
               </Field>
             </div>
@@ -167,18 +168,25 @@ export default function InvoicesPage() {
                       onChange={(e) => updateLine(li.id, { description: e.target.value })}
                     />
                     <div className="flex gap-2 items-center">
-                      <input
-                        type="number"
-                        className="input w-20"
-                        value={li.quantity}
-                        onChange={(e) => updateLine(li.id, { quantity: Number(e.target.value) })}
-                      />
-                      <input
-                        type="number"
-                        className="input w-24"
-                        value={li.rate}
-                        onChange={(e) => updateLine(li.id, { rate: Number(e.target.value) })}
-                      />
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-neutral-400 leading-none mb-0.5">Qty</span>
+                        <input
+                          type="number"
+                          className="input w-20"
+                          value={li.quantity}
+                          onChange={(e) => updateLine(li.id, { quantity: Number(e.target.value) })}
+                        />
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-neutral-400 leading-none mb-0.5">Price ($)</span>
+                        <input
+                          type="number"
+                          className="input w-24"
+                          value={li.rate}
+                          onChange={(e) => updateLine(li.id, { rate: Number(e.target.value) })}
+                          onFocus={(e) => e.target.select()}
+                        />
+                      </div>
                       <button onClick={() => removeLine(li.id)} className="ml-auto p-2 text-neutral-400 hover:text-red-500">
                         <Trash2 size={16} />
                       </button>
@@ -205,17 +213,27 @@ export default function InvoicesPage() {
               </span>
             </div>
 
-            <PDFDownloadLink
-              document={<InvoicePDF data={invoiceData} />}
-              fileName={`${invoiceNumber || "invoice"}.pdf`}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#3FBB43] text-white py-2.5 text-sm font-medium hover:bg-[#2E8A32] transition"
-            >
-              {({ loading }) => (
-                <>
-                  <Download size={16} /> {loading ? "Preparing PDF…" : "Download Invoice PDF"}
-                </>
-              )}
-            </PDFDownloadLink>
+            <div onClick={() => logToCRM({
+              type: "Invoice",
+              status: "Downloaded",
+              subtotal: subtotal.toFixed(2),
+              taxAmount: taxAmount.toFixed(2),
+              total: total.toFixed(2),
+              ...invoiceData,
+              lineItems: JSON.stringify(lineItems),
+            })}>
+              <PDFDownloadLink
+                document={<InvoicePDF data={invoiceData} />}
+                fileName={`${invoiceNumber || "invoice"}.pdf`}
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#3FBB43] text-white py-2.5 text-sm font-medium hover:bg-[#2E8A32] transition"
+              >
+                {({ loading }) => (
+                  <>
+                    <Download size={16} /> {loading ? "Preparing PDF…" : "Download Invoice PDF"}
+                  </>
+                )}
+              </PDFDownloadLink>
+            </div>
           </div>
 
           {/* PREVIEW */}

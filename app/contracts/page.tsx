@@ -7,6 +7,7 @@ import type { ContractData } from "@/lib/types";
 import { ContractPDF } from "@/components/ContractPDF";
 import { Download, Send, LogOut } from "lucide-react";
 import { signOutAction } from "@/lib/actions";
+import { logToCRM } from "@/lib/crm";
 
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
@@ -84,6 +85,11 @@ export default function ContractsPage() {
         return;
       }
       setSendStatus({ state: "sent", submissionId: data.id });
+      logToCRM({
+        type: "Contract",
+        status: "Sent for Signature",
+        ...contractData,
+      });
     } catch (err) {
       setSendStatus({ state: "error", message: "Network error — check DocuSeal is reachable." });
     }
@@ -197,17 +203,23 @@ export default function ContractsPage() {
                 <p className="text-xs text-red-600">✗ {sendStatus.message}</p>
               )}
 
-              <PDFDownloadLink
-                document={<ContractPDF data={contractData} />}
-                fileName={`${contractNumber || "contract"}.pdf`}
-                className="w-full flex items-center justify-center gap-2 rounded-lg border border-neutral-300 text-neutral-700 py-2.5 text-sm font-medium hover:bg-neutral-50 transition"
-              >
-                {({ loading }) => (
-                  <>
-                    <Download size={16} /> {loading ? "Preparing PDF…" : "Download Unsigned PDF Copy"}
-                  </>
-                )}
-              </PDFDownloadLink>
+              <div onClick={() => logToCRM({
+                type: "Contract",
+                status: "Downloaded",
+                ...contractData,
+              })}>
+                <PDFDownloadLink
+                  document={<ContractPDF data={contractData} />}
+                  fileName={`${contractNumber || "contract"}.pdf`}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg border border-neutral-300 text-neutral-700 py-2.5 text-sm font-medium hover:bg-neutral-50 transition"
+                >
+                  {({ loading }) => (
+                    <>
+                      <Download size={16} /> {loading ? "Preparing PDF…" : "Download Unsigned PDF Copy"}
+                    </>
+                  )}
+                </PDFDownloadLink>
+              </div>
             </div>
           </div>
 
