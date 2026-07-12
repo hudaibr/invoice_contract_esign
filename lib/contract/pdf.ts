@@ -9,7 +9,7 @@ export function hashPdf(buffer: Buffer): string {
 
 const PLACEMENT = {
   clientSignature: { x: 290, y: 127, width: 180, height: 30 },
-  companySignature: { x: 50, y: 80, width: 200, height: 50 },
+  companySignature: { x: 50, y: 127, width: 180, height: 30 },
 };
 
 export async function embedSignature(
