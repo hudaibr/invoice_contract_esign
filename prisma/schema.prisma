@@ -12,4 +12,81 @@ model User {
   email          String   @unique
   hashedPassword String
   createdAt      DateTime @default(now())
+  esContracts    EsContract[]
+}
+
+model EsContract {
+  id                   String        @id @default(uuid())
+  contractNumber       String
+  clientId             String?
+  userId               String
+  status               String        @default("draft")
+  contractData         Json
+  documentHash         String?
+  signedDocumentHash   String?
+  currentVersion       Int           @default(1)
+  pdfUrl               String?
+  signedPdfUrl         String?
+  auditCertificateUrl  String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  completedAt          DateTime?
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signingTokens  EsSigningToken[]
+  signatures     EsSignature[]
+  auditLogs      EsAuditLog[]
+
+  @@map("esign_contracts")
+}
+
+model EsSigningToken {
+  id         String    @id @default(uuid())
+  contractId String
+  token      String    @unique
+  expiresAt  DateTime
+  used       Boolean   @default(false)
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  contract EsContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@map("esign_signing_tokens")
+}
+
+model EsSignature {
+  id                String   @id @default(uuid())
+  contractId        String
+  signerName        String
+  signerEmail       String
+  signatureType     String
+  signatureImageUrl String
+  consentData       Json?
+  ipAddress         String
+  userAgent         String
+  browser           String
+  operatingSystem   String
+  device            String
+  timezone          String
+  language          String
+  signedAt          DateTime @default(now())
+
+  contract EsContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@map("esign_signatures")
+}
+
+model EsAuditLog {
+  id         String   @id @default(uuid())
+  contractId String
+  event      String
+  timestamp  DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+
+  contract EsContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId, timestamp])
+  @@map("esign_audit_logs")
 }

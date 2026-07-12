@@ -25,7 +25,6 @@ const styles = StyleSheet.create({
   signaturesRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 40 },
   sigBlock: { width: "45%" },
   sigLine: { borderBottom: `1pt solid ${c.text}`, height: 30, marginBottom: 4 },
-  sigTag: { fontSize: 7, color: c.muted, height: 30, marginBottom: 4, paddingTop: 10 },
   sigLabel: { fontSize: 8, color: c.muted },
   auditBox: {
     marginTop: 16,
@@ -138,10 +137,7 @@ export function ContractPDF({ data }: { data: ContractData }) {
             <Text style={styles.sigLabel}>Date: {data.date}</Text>
           </View>
           <View style={styles.sigBlock}>
-            {/* DocuSeal text-tag syntax — auto-detected and converted into a
-                real fillable signature + date field when this PDF is sent
-                through the DocuSeal API. See /api/contracts/send/route.ts */}
-            <Text style={styles.sigTag}>{"{{Client Signature;role=Client;type=signature}}"}</Text>
+            <View style={styles.sigLine} />
             <Text style={styles.sigLabel}>{data.clientName} — Client Signature</Text>
             <Text style={styles.sigLabel}>Date: {"{{Signed Date;role=Client;type=date}}"}</Text>
           </View>

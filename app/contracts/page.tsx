@@ -26,7 +26,7 @@ function todayISO() {
 type SendStatus =
   | { state: "idle" }
   | { state: "sending" }
-  | { state: "sent"; submissionId: number | string }
+  | { state: "sent"; signingUrl: string; contractId: string }
   | { state: "error"; message: string };
 
 export default function ContractsPage() {
@@ -74,24 +74,24 @@ export default function ContractsPage() {
     }
     setSendStatus({ state: "sending" });
     try {
-      const res = await fetch("/api/contracts/send", {
+      const res = await fetch("/api/esign/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contractData),
+        body: JSON.stringify({ contractData }),
       });
       const data = await res.json();
       if (!res.ok) {
         setSendStatus({ state: "error", message: data.error || "Something went wrong." });
         return;
       }
-      setSendStatus({ state: "sent", submissionId: data.id });
+      setSendStatus({ state: "sent", signingUrl: data.signingUrl, contractId: data.contractId });
       logToCRM({
         type: "Contract",
         status: "Sent for Signature",
         ...contractData,
       });
     } catch (err) {
-      setSendStatus({ state: "error", message: "Network error — check DocuSeal is reachable." });
+      setSendStatus({ state: "error", message: "Network error. Please try again." });
     }
   }
 
@@ -191,12 +191,12 @@ export default function ContractsPage() {
                 className="w-full flex items-center justify-center gap-2 rounded-lg bg-neutral-900 text-white py-2.5 text-sm font-medium hover:bg-neutral-800 transition disabled:opacity-50"
               >
                 <Send size={16} />
-                {sendStatus.state === "sending" ? "Sending to DocuSeal…" : "Send for Signature via DocuSeal"}
+                {sendStatus.state === "sending" ? "Sending for Signature…" : "Send for Signature"}
               </button>
 
               {sendStatus.state === "sent" && (
                 <p className="text-xs text-green-600">
-                  ✓ Sent — {clientName || "the client"} will receive a signing email. Submission ID: {sendStatus.submissionId}
+                  ✓ Sent — {clientName || "the client"} will receive a signing email.
                 </p>
               )}
               {sendStatus.state === "error" && (

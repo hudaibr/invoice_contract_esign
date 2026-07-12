@@ -4,7 +4,7 @@
 export const branding = {
   agencyName: "Jiggers in Joggers",
   tagline: "Your Vision, Our Art",
-  logoUrl: "/logo.png",
+  logoUrl: (process.env.NEXT_PUBLIC_BASE_URL || "") + "/logo.png",
   email: "hello@jiggersinjoggers.com", // update if this differs from your actual contact inbox
   website: "jiggersinjoggers.com",
   address: "203 S Boston St, Rice, TX 75155",

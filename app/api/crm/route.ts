@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const WEBHOOKS = [
   process.env.CRM_WEBHOOK_URL,
   process.env.CRM_BACKUP_WEBHOOK_URL,
-].filter(Boolean);
+].filter(Boolean) as string[];
 
 export async function POST(req: NextRequest) {
   if (WEBHOOKS.length === 0) {
