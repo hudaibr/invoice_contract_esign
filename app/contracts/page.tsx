@@ -111,7 +111,10 @@ export default function ContractsPage() {
           </div>
           <div className="flex items-center gap-4">
             <a href="/invoices" className="text-sm text-[#3FBB43] hover:underline">
-              Go to Invoices →
+              Invoices
+            </a>
+            <a href="/contracts/status" className="text-sm text-[#3FBB43] hover:underline">
+              Contract Status
             </a>
             <form action={signOutAction}>
               <button className="text-sm text-neutral-400 hover:text-red-500 flex items-center gap-1">
