@@ -49,7 +49,7 @@ export async function sendSigningLink(params: SendSigningLinkParams) {
   const { appUrl } = getConfig();
   const signingUrl = `${appUrl}/sign/${params.token}`;
 
-  return sendEmail({
+  await sendEmail({
     to: params.to,
     subject: `Sign your contract — ${params.contractNumber}`,
     htmlContent: `
@@ -77,6 +77,25 @@ export async function sendSigningLink(params: SendSigningLinkParams) {
       </div>
     `,
   });
+
+  await sendEmail({
+    to: { email: branding.email, name: branding.agencyName },
+    subject: `Contract sent — ${params.contractNumber}`,
+    htmlContent: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">
+        <h2 style="color: #3FBB43;">Contract sent to ${params.to.name}</h2>
+        <p>
+          <strong>${params.contractNumber}</strong> was sent to
+          ${params.to.email} for signature.
+        </p>
+        <p>
+          <a href="${appUrl}/contracts/status" style="color: #3FBB43;">
+            View in dashboard →
+          </a>
+        </p>
+      </div>
+    `,
+  });
 }
 
 export interface SendSignedCopiesParams {
@@ -87,7 +106,7 @@ export interface SendSignedCopiesParams {
 }
 
 export async function sendSignedCopies(params: SendSignedCopiesParams) {
-  return sendEmail({
+  await sendEmail({
     to: params.to,
     subject: `Contract signed — ${params.contractNumber}`,
     htmlContent: `
@@ -115,6 +134,29 @@ export async function sendSignedCopies(params: SendSignedCopiesParams) {
         </p>
         <p style="color: #9CA3AF; font-size: 12px;">
           ${branding.agencyName} · ${branding.address}
+        </p>
+      </div>
+    `,
+  });
+
+  await sendEmail({
+    to: { email: branding.email, name: branding.agencyName },
+    subject: `Contract signed — ${params.contractNumber}`,
+    htmlContent: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">
+        <h2 style="color: #3FBB43;">Contract signed by ${params.to.name}</h2>
+        <p>
+          <strong>${params.contractNumber}</strong> was signed by
+          ${params.to.email}.
+        </p>
+        <p>
+          <a href="${params.signedPdfUrl}" style="color: #3FBB43;">
+            Download Signed PDF →
+          </a>
+          <br />
+          <a href="${params.auditCertificateUrl}" style="color: #3FBB43;">
+            Download Audit Certificate →
+          </a>
         </p>
       </div>
     `,
