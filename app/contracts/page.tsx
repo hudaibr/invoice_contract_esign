@@ -162,7 +162,7 @@ export default function ContractsPage() {
 
             <div className="border-t border-neutral-100 pt-4 grid grid-cols-2 gap-4">
               <Field label={`Price (${branding.currency.code})`}>
-                <input type="number" className="input" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
+                <input type="number" className="input" value={price} onChange={(e) => setPrice(Number(e.target.value))} onFocus={(e) => e.target.select()} />
               </Field>
               <Field label="Payment Method">
                 <input className="input" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} />
