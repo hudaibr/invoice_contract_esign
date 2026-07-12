@@ -170,7 +170,8 @@ export async function signContract(
 
   let signedPdfBuffer = await embedSignature(unsignedPdfBuffer, signaturePngBuffer);
 
-  const companySigUrl = process.env.COMPANY_SIGNATURE_URL;
+  const companySigUrl = process.env.COMPANY_SIGNATURE_URL
+    ?? (process.env.NEXT_PUBLIC_BASE_URL || "") + "/signature.png";
   if (companySigUrl) {
     try {
       const companySigResponse = await fetch(companySigUrl);
