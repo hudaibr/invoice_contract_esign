@@ -4,9 +4,10 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { branding } from "@/lib/branding";
 import type { InvoiceData, InvoiceLineItem } from "@/lib/types";
-import { Plus, Trash2, Download, LogOut } from "lucide-react";
+import { Plus, Trash2, Download, LogOut, Send } from "lucide-react";
 import { signOutAction } from "@/lib/actions";
 import { logToCRM } from "@/lib/crm";
+import { sendInvoiceEmail } from "./actions";
 
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
@@ -48,6 +49,9 @@ export default function InvoicesPage() {
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([
     { id: uid(), description: "", quantity: 1, rate: 0 },
   ]);
+
+  const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [sendError, setSendError] = useState("");
 
   const subtotal = lineItems.reduce((s, li) => s + li.quantity * li.rate, 0);
   const taxAmount = subtotal * (taxRate / 100);
@@ -234,6 +238,34 @@ export default function InvoicesPage() {
                 )}
               </PDFDownloadLink>
             </div>
+
+            <button
+              onClick={async () => {
+                if (!clientEmail.trim()) {
+                  setSendState("error");
+                  setSendError("Client email is required");
+                  return;
+                }
+                setSendState("sending");
+                setSendError("");
+                const result = await sendInvoiceEmail(invoiceData);
+                if (result.success) {
+                  setSendState("sent");
+                } else {
+                  setSendState("error");
+                  setSendError(result.error ?? "Failed to send");
+                }
+              }}
+              disabled={sendState === "sending" || sendState === "sent"}
+              className="w-full flex items-center justify-center gap-2 rounded-lg border border-[#3FBB43] text-[#3FBB43] py-2.5 text-sm font-medium hover:bg-[#3FBB43] hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send size={16} />
+              {sendState === "sending" ? "Sending…" : sendState === "sent" ? "Sent!" : "Send Invoice via Email"}
+            </button>
+
+            {sendState === "error" && sendError && (
+              <p className="text-xs text-red-500 text-center">{sendError}</p>
+            )}
           </div>
 
           {/* PREVIEW */}
