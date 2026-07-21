@@ -82,8 +82,12 @@ export async function createAndSendPaypalInvoice(
   }
 
   const created = await createRes.json();
-  const paypalInvoiceId = created.id;
-  const paypalLink = created.links?.find((l: { rel: string }) => l.rel === "self")?.href ?? "";
+  const paypalInvoiceId = created.id ?? created.invoice_id;
+  if (!paypalInvoiceId) {
+    throw new Error(`PayPal create invoice response missing ID: ${JSON.stringify(created)}`);
+  }
+  const paypalLink = created.links?.find((l: { rel: string }) => l.rel === "self")?.href
+    ?? created.href ?? created.invoice_url ?? "";
 
   // Store locally
   const localInvoice = await prisma.paypalInvoice.create({
