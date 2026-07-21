@@ -23,6 +23,14 @@ export async function createAndSendPaypalInvoice(
   const subtotal = data.lineItems.reduce((s, li) => s + li.quantity * li.rate, 0);
   const taxAmount = subtotal * (data.taxRate / 100);
 
+  if (taxAmount > 0) {
+    lineItems.push({
+      name: `Sales Tax (${data.taxRate}%)`,
+      quantity: "1",
+      unit_amount: { currency_code: "USD", value: taxAmount.toFixed(2) },
+    });
+  }
+
   const invoicePayload = {
     detail: {
       invoice_number: data.invoiceNumber,
@@ -54,8 +62,7 @@ export async function createAndSendPaypalInvoice(
     },
     amount: {
       breakdown: {
-        item_total: { currency_code: "USD", value: subtotal.toFixed(2) },
-        tax_total: { currency_code: "USD", value: taxAmount.toFixed(2) },
+        item_total: { currency_code: "USD", value: (subtotal + taxAmount).toFixed(2) },
       },
     },
   };
