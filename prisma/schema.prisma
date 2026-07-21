@@ -13,6 +13,7 @@ model User {
   hashedPassword String
   createdAt      DateTime @default(now())
   esContracts    EsContract[]
+  paypalInvoices PaypalInvoice[]
 }
 
 model EsContract {
@@ -89,4 +90,26 @@ model EsAuditLog {
 
   @@index([contractId, timestamp])
   @@map("esign_audit_logs")
+}
+
+model PaypalInvoice {
+  id                String    @id @default(uuid())
+  userId            String
+  paypalInvoiceId   String    @unique
+  invoiceNumber     String
+  clientName        String
+  clientEmail       String
+  totalAmount       Float
+  currencyCode      String    @default("USD")
+  status            String    @default("DRAFT")
+  paypalLink        String?
+  invoiceData       Json
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  paidAt            DateTime?
+  paidAmount        Float?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("paypal_invoices")
 }

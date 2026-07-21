@@ -4,7 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { branding } from "@/lib/branding";
 import type { InvoiceData, InvoiceLineItem } from "@/lib/types";
-import { Plus, Trash2, Download, LogOut, Send } from "lucide-react";
+import { Plus, Trash2, Download, LogOut, Send, CreditCard } from "lucide-react";
 import { signOutAction } from "@/lib/actions";
 import { logToCRM } from "@/lib/crm";
 import { sendInvoiceEmail } from "./actions";
@@ -52,6 +52,8 @@ export default function InvoicesPage() {
 
   const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [sendError, setSendError] = useState("");
+  const [paypalState, setPaypalState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [paypalError, setPaypalError] = useState("");
 
   const subtotal = lineItems.reduce((s, li) => s + li.quantity * li.rate, 0);
   const taxAmount = subtotal * (taxRate / 100);
@@ -99,7 +101,10 @@ export default function InvoicesPage() {
           </div>
           <div className="flex items-center gap-4">
             <a href="/contracts" className="text-sm text-[#3FBB43] hover:underline">
-              Go to Contracts →
+              Contracts
+            </a>
+            <a href="/paypal/status" className="text-sm text-[#3FBB43] hover:underline">
+              PayPal Invoices
             </a>
             <form action={signOutAction}>
               <button className="text-sm text-neutral-400 hover:text-red-500 flex items-center gap-1">
@@ -265,6 +270,44 @@ export default function InvoicesPage() {
 
             {sendState === "error" && sendError && (
               <p className="text-xs text-red-500 text-center">{sendError}</p>
+            )}
+
+            <button
+              onClick={async () => {
+                if (!clientEmail.trim()) {
+                  setPaypalState("error");
+                  setPaypalError("Client email is required");
+                  return;
+                }
+                setPaypalState("sending");
+                setPaypalError("");
+                try {
+                  const res = await fetch("/api/paypal/invoice/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(invoiceData),
+                  });
+                  if (res.ok) {
+                    setPaypalState("sent");
+                  } else {
+                    const err = await res.json();
+                    setPaypalState("error");
+                    setPaypalError(err.error ?? "Failed to send");
+                  }
+                } catch {
+                  setPaypalState("error");
+                  setPaypalError("Network error");
+                }
+              }}
+              disabled={paypalState === "sending" || paypalState === "sent"}
+              className="w-full flex items-center justify-center gap-2 rounded-lg border border-[#0070BA] text-[#0070BA] py-2.5 text-sm font-medium hover:bg-[#0070BA] hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <CreditCard size={16} />
+              {paypalState === "sending" ? "Sending…" : paypalState === "sent" ? "Sent via PayPal!" : "Send via PayPal Invoice"}
+            </button>
+
+            {paypalState === "error" && paypalError && (
+              <p className="text-xs text-red-500 text-center">{paypalError}</p>
             )}
           </div>
 
