@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getPaypalInvoiceStatus } from "@/lib/paypal/invoice";
+import { getPaypalInvoiceStatus, listPaypalInvoices } from "@/lib/paypal/invoice";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const paypalId = searchParams.get("paypalInvoiceId");
+  const listFromPaypal = searchParams.get("list") === "paypal";
 
   if (paypalId) {
     try {
@@ -19,6 +20,18 @@ export async function GET(req: NextRequest) {
     } catch (e) {
       return NextResponse.json(
         { error: e instanceof Error ? e.message : "Failed to fetch status" },
+        { status: 500 },
+      );
+    }
+  }
+
+  if (listFromPaypal) {
+    try {
+      const paypalInvoices = await listPaypalInvoices();
+      return NextResponse.json(paypalInvoices);
+    } catch (e) {
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "Failed to list PayPal invoices" },
         { status: 500 },
       );
     }

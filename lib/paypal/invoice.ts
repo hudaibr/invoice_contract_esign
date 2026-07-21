@@ -182,3 +182,95 @@ export async function getPaypalInvoiceStatus(paypalInvoiceId: string) {
 
   return res.json();
 }
+
+export async function listPaypalInvoices() {
+  const token = await getAccessToken();
+  const res = await fetch(`${PAYPAL_API}/v2/invoicing/invoices?page=1&page_size=50&total_required=true`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(`PayPal list invoices error (${res.status}): ${await res.text()}`);
+  }
+
+  return res.json();
+}
+
+export async function cancelPaypalInvoice(paypalInvoiceId: string) {
+  const token = await getAccessToken();
+  const res = await fetch(`${PAYPAL_API}/v2/invoicing/invoices/${paypalInvoiceId}/cancel`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ send_to_invoicer: true, send_to_recipient: true }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`PayPal cancel invoice error (${res.status}): ${await res.text()}`);
+  }
+
+  await prisma.paypalInvoice.updateMany({
+    where: { paypalInvoiceId },
+    data: { status: "CANCELLED" },
+  });
+
+  return res.json();
+}
+
+export async function deletePaypalInvoice(paypalInvoiceId: string) {
+  const token = await getAccessToken();
+  const res = await fetch(`${PAYPAL_API}/v2/invoicing/invoices/${paypalInvoiceId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(`PayPal delete invoice error (${res.status}): ${await res.text()}`);
+  }
+
+  await prisma.paypalInvoice.deleteMany({ where: { paypalInvoiceId } });
+  return true;
+}
+
+export async function remindPaypalInvoice(paypalInvoiceId: string) {
+  const token = await getAccessToken();
+  const res = await fetch(`${PAYPAL_API}/v2/invoicing/invoices/${paypalInvoiceId}/remind`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ send_to_invoicer: true }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`PayPal remind invoice error (${res.status}): ${await res.text()}`);
+  }
+
+  return res.json();
+}
+
+export async function setupPaypalReminders() {
+  const token = await getAccessToken();
+  const res = await fetch(`${PAYPAL_API}/v2/invoicing/setup-reminders`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      configurations: [
+        { type: "BEFORE_DUE", interval: { unit: "DAY", value: 2 }, repetition: 1, notification: { send_to_invoicer: false } },
+        { type: "AFTER_DUE", interval: { unit: "DAY", value: 2 }, repetition: 2, notification: { send_to_invoicer: false } },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`PayPal setup reminders error (${res.status}): ${await res.text()}`);
+  }
+
+  return res.json();
+}

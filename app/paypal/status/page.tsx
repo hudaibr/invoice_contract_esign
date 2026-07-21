@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { branding } from "@/lib/branding";
-import { LogOut, RefreshCw } from "lucide-react";
+import { LogOut, RefreshCw, Bell, Trash2, XCircle, Send, Download, List } from "lucide-react";
 import { signOutAction } from "@/lib/actions";
 
 interface PaypalInvoice {
@@ -33,6 +33,8 @@ export default function PaypalStatusPage() {
   const [invoices, setInvoices] = useState<PaypalInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionMsg, setActionMsg] = useState("");
+  const [paypalList, setPaypalList] = useState(false);
 
   async function fetchInvoices() {
     setLoading(true);
@@ -48,6 +50,70 @@ export default function PaypalStatusPage() {
     }
   }
 
+  async function fetchFromPaypal() {
+    setPaypalList(true);
+    setError("");
+    try {
+      const res = await fetch("/api/paypal/invoice/status?list=paypal");
+      if (!res.ok) throw new Error("Failed to load from PayPal");
+      const data = await res.json();
+      const items: PaypalInvoice[] = (data.items || []).map((inv: Record<string, unknown>) => ({
+        id: inv.id as string,
+        paypalInvoiceId: inv.id as string,
+        invoiceNumber: (inv.detail as Record<string, unknown>)?.invoice_number as string || "",
+        clientName: ((inv.primary_recipients as Array<Record<string, unknown>>)?.[0]?.billing_info as Record<string, unknown>)?.name as Record<string, unknown>?.given_name as string || "",
+        clientEmail: ((inv.primary_recipients as Array<Record<string, unknown>>)?.[0]?.billing_info as Record<string, unknown>)?.email_address as string || "",
+        totalAmount: Number((inv.amount as Record<string, unknown>)?.value || 0),
+        currencyCode: (inv.amount as Record<string, unknown>)?.currency_code as string || "USD",
+        status: inv.status as string,
+        paypalLink: `https://www.paypal.com/invoices/payerView/details/${inv.id}`,
+        createdAt: (inv.detail as Record<string, unknown>)?.invoice_date as string || "",
+        paidAt: null,
+        paidAmount: null,
+      }));
+      setInvoices(items);
+    } catch {
+      setError("Failed to load from PayPal");
+    } finally {
+      setPaypalList(false);
+    }
+  }
+
+  async function doAction(action: string, paypalInvoiceId: string) {
+    setActionMsg("");
+    try {
+      const res = await fetch(`/api/paypal/invoice/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paypalInvoiceId }),
+      });
+      if (res.ok) {
+        setActionMsg(`${action} successful`);
+        fetchInvoices();
+      } else {
+        const err = await res.json();
+        setActionMsg(`${action} failed: ${err.error}`);
+      }
+    } catch {
+      setActionMsg(`${action} failed`);
+    }
+  }
+
+  async function setupReminders() {
+    setActionMsg("");
+    try {
+      const res = await fetch("/api/paypal/invoice/reminders", { method: "POST" });
+      if (res.ok) {
+        setActionMsg("Auto reminders enabled");
+      } else {
+        const err = await res.json();
+        setActionMsg(`Reminders setup failed: ${err.error}`);
+      }
+    } catch {
+      setActionMsg("Reminders setup failed");
+    }
+  }
+
   useEffect(() => { fetchInvoices(); }, []);
 
   return (
@@ -59,15 +125,16 @@ export default function PaypalStatusPage() {
             <p className="text-sm text-neutral-500">{branding.agencyName}</p>
           </div>
           <div className="flex items-center gap-4">
-            <button
-              onClick={fetchInvoices}
-              className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900"
-            >
+            <button onClick={fetchFromPaypal} disabled={paypalList} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900">
+              <List size={14} /> {paypalList ? "Syncing..." : "Sync from PayPal"}
+            </button>
+            <button onClick={setupReminders} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900">
+              <Bell size={14} /> Auto Reminders
+            </button>
+            <button onClick={fetchInvoices} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900">
               <RefreshCw size={14} /> Refresh
             </button>
-            <a href="/invoices" className="text-sm text-[#3FBB43] hover:underline">
-              Invoices
-            </a>
+            <a href="/invoices" className="text-sm text-[#3FBB43] hover:underline">Invoices</a>
             <form action={signOutAction}>
               <button className="text-sm text-neutral-400 hover:text-red-500 flex items-center gap-1">
                 <LogOut size={14} /> Sign Out
@@ -75,6 +142,12 @@ export default function PaypalStatusPage() {
             </form>
           </div>
         </div>
+
+        {actionMsg && (
+          <div className="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-700 text-center">
+            {actionMsg}
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-20 text-sm text-neutral-400">Loading...</div>
@@ -96,13 +169,18 @@ export default function PaypalStatusPage() {
                     <th className="text-left px-4 py-3 font-medium text-neutral-600">Status</th>
                     <th className="text-left px-4 py-3 font-medium text-neutral-600">Sent</th>
                     <th className="text-left px-4 py-3 font-medium text-neutral-600">Paid</th>
-                    <th className="text-left px-4 py-3 font-medium text-neutral-600">Link</th>
+                    <th className="text-left px-4 py-3 font-medium text-neutral-600">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {invoices.map((inv) => (
                     <tr key={inv.id} className="border-b border-neutral-50 hover:bg-neutral-50">
-                      <td className="px-4 py-3 font-medium">{inv.invoiceNumber}</td>
+                      <td className="px-4 py-3 font-medium">
+                        <div>{inv.invoiceNumber}</div>
+                        <a href={inv.paypalLink ?? "#"} target="_blank" className="text-[10px] text-[#0070BA] hover:underline">
+                          {inv.paypalInvoiceId.slice(0, 18)}...
+                        </a>
+                      </td>
                       <td className="px-4 py-3">
                         <div>{inv.clientName}</div>
                         <div className="text-xs text-neutral-400">{inv.clientEmail}</div>
@@ -122,17 +200,22 @@ export default function PaypalStatusPage() {
                         {inv.paidAt ? new Date(inv.paidAt).toLocaleDateString() : "-"}
                       </td>
                       <td className="px-4 py-3">
-                        {inv.paypalLink ? (
-                          <a
-                            href={inv.paypalLink}
-                            target="_blank"
-                            className="text-[#3FBB43] hover:underline text-xs"
-                          >
-                            View on PayPal ↗
-                          </a>
-                        ) : (
-                          <span className="text-xs text-neutral-300">-</span>
-                        )}
+                        <div className="flex gap-1 flex-wrap">
+                          {inv.paypalLink && (
+                            <a href={inv.paypalLink} target="_blank" className="p-1 text-neutral-400 hover:text-[#0070BA]" title="View on PayPal">
+                              <Send size={14} />
+                            </a>
+                          )}
+                          <button onClick={() => doAction("cancel", inv.paypalInvoiceId)} className="p-1 text-neutral-400 hover:text-red-600" title="Cancel">
+                            <XCircle size={14} />
+                          </button>
+                          <button onClick={() => doAction("remind", inv.paypalInvoiceId)} className="p-1 text-neutral-400 hover:text-blue-600" title="Send Reminder">
+                            <Bell size={14} />
+                          </button>
+                          <button onClick={() => doAction("delete", inv.paypalInvoiceId)} className="p-1 text-neutral-400 hover:text-red-600" title="Delete">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
