@@ -57,20 +57,27 @@ export default function PaypalStatusPage() {
       const res = await fetch("/api/paypal/invoice/status?list=paypal");
       if (!res.ok) throw new Error("Failed to load from PayPal");
       const data = await res.json();
-      const items: PaypalInvoice[] = (data.items || []).map((inv: Record<string, unknown>) => ({
-        id: inv.id as string,
-        paypalInvoiceId: inv.id as string,
-        invoiceNumber: (inv.detail as Record<string, unknown>)?.invoice_number as string || "",
-        clientName: ((inv.primary_recipients as Array<Record<string, unknown>>)?.[0]?.billing_info as Record<string, unknown>)?.name as Record<string, unknown>?.given_name as string || "",
-        clientEmail: ((inv.primary_recipients as Array<Record<string, unknown>>)?.[0]?.billing_info as Record<string, unknown>)?.email_address as string || "",
-        totalAmount: Number((inv.amount as Record<string, unknown>)?.value || 0),
-        currencyCode: (inv.amount as Record<string, unknown>)?.currency_code as string || "USD",
-        status: inv.status as string,
-        paypalLink: `https://www.paypal.com/invoices/payerView/details/${inv.id}`,
-        createdAt: (inv.detail as Record<string, unknown>)?.invoice_date as string || "",
-        paidAt: null,
-        paidAmount: null,
-      }));
+      const items: PaypalInvoice[] = (data.items || []).map((inv: Record<string, unknown>) => {
+        const detail = inv.detail as Record<string, unknown> | undefined;
+        const amount = inv.amount as Record<string, unknown> | undefined;
+        const recipient = (inv.primary_recipients as Array<Record<string, unknown>> | undefined)?.[0];
+        const billingInfo = recipient?.billing_info as Record<string, unknown> | undefined;
+        const nameObj = billingInfo?.name as Record<string, unknown> | undefined;
+        return {
+          id: inv.id as string,
+          paypalInvoiceId: inv.id as string,
+          invoiceNumber: (detail?.invoice_number as string) || "",
+          clientName: (nameObj?.given_name as string) || "",
+          clientEmail: (billingInfo?.email_address as string) || "",
+          totalAmount: Number((amount?.value as string) || 0),
+          currencyCode: (amount?.currency_code as string) || "USD",
+          status: inv.status as string,
+          paypalLink: `https://www.paypal.com/invoices/payerView/details/${inv.id}`,
+          createdAt: (detail?.invoice_date as string) || "",
+          paidAt: null,
+          paidAmount: null,
+        };
+      });
       setInvoices(items);
     } catch {
       setError("Failed to load from PayPal");
