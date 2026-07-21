@@ -1,5 +1,6 @@
 import { getAccessToken, PAYPAL_API } from "./auth";
 import { prisma } from "@/lib/prisma";
+import { branding } from "@/lib/branding";
 import type { InvoiceData } from "@/lib/types";
 
 export interface CreatePaypalInvoiceResult {
@@ -14,25 +15,25 @@ export async function createAndSendPaypalInvoice(
 ): Promise<CreatePaypalInvoiceResult> {
   const token = await getAccessToken();
 
+  const subtotal = data.lineItems.reduce((s, li) => s + li.quantity * li.rate, 0);
+
   const lineItems = data.lineItems.map((li) => ({
     name: li.description || "Service",
     quantity: String(li.quantity),
     unit_amount: { currency_code: "USD", value: li.rate.toFixed(2) },
+    ...(data.taxRate > 0 ? {
+      tax: {
+        name: "Sales Tax",
+        percent: String(data.taxRate),
+      },
+    } : {}),
   }));
 
-  const subtotal = data.lineItems.reduce((s, li) => s + li.quantity * li.rate, 0);
-  const taxAmount = subtotal * (data.taxRate / 100);
-
-  if (taxAmount > 0) {
-    lineItems.push({
-      name: `Sales Tax (${data.taxRate}%)`,
-      quantity: "1",
-      unit_amount: { currency_code: "USD", value: taxAmount.toFixed(2) },
-    });
-  }
-
-  const invoicePayload = {
+  const invoicerName = (process.env.PAYPAL_MERCHANT_NAME || branding.agencyName).split(" ");
+  const invoicePayload: Record<string, unknown> = {
     detail: {
+      reference: data.invoiceNumber,
+      invoice_date: data.issueDate,
       invoice_number: data.invoiceNumber,
       currency_code: "USD",
       note: data.notes || undefined,
@@ -42,8 +43,12 @@ export async function createAndSendPaypalInvoice(
       },
     },
     invoicer: {
-      name: { given_name: process.env.PAYPAL_MERCHANT_NAME || "Agency" },
-      email_address: process.env.PAYPAL_MERCHANT_EMAIL,
+      name: {
+        given_name: invoicerName[0] || branding.agencyName,
+        surname: invoicerName.slice(1).join(" ") || undefined,
+      },
+      email_address: process.env.PAYPAL_MERCHANT_EMAIL || branding.email,
+      website: branding.website,
     },
     primary_recipients: [
       {
@@ -58,14 +63,17 @@ export async function createAndSendPaypalInvoice(
       partial_payment: { allow_partial_payment: false },
       allow_tip: false,
       tax_calculated_after_discount: true,
-      template_id: process.env.PAYPAL_TEMPLATE_ID || undefined,
     },
     amount: {
       breakdown: {
-        item_total: { currency_code: "USD", value: (subtotal + taxAmount).toFixed(2) },
+        item_total: { currency_code: "USD", value: subtotal.toFixed(2) },
       },
     },
   };
+
+  if (process.env.PAYPAL_TEMPLATE_ID) {
+    (invoicePayload.configuration as Record<string, unknown>).template_id = process.env.PAYPAL_TEMPLATE_ID;
+  }
 
   // Create draft
   const createRes = await fetch(`${PAYPAL_API}/v2/invoicing/invoices`, {
@@ -73,6 +81,7 @@ export async function createAndSendPaypalInvoice(
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      Prefer: "return=representation",
     },
     body: JSON.stringify(invoicePayload),
   });
@@ -89,6 +98,8 @@ export async function createAndSendPaypalInvoice(
   const paypalLink = created.links?.find((l: { rel: string }) => l.rel === "self")?.href
     ?? created.href ?? created.invoice_url ?? "";
 
+  const totalAmount = subtotal + (subtotal * data.taxRate / 100);
+
   // Store locally
   const localInvoice = await prisma.paypalInvoice.create({
     data: {
@@ -97,7 +108,7 @@ export async function createAndSendPaypalInvoice(
       invoiceNumber: data.invoiceNumber,
       clientName: data.clientName,
       clientEmail: data.clientEmail,
-      totalAmount: subtotal + taxAmount,
+      totalAmount,
       currencyCode: "USD",
       status: "DRAFT",
       paypalLink,
@@ -113,7 +124,7 @@ export async function createAndSendPaypalInvoice(
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      subject: `Invoice ${data.invoiceNumber} from ${process.env.PAYPAL_MERCHANT_NAME || "Agency"}`,
+      subject: `Invoice ${data.invoiceNumber} from ${process.env.PAYPAL_MERCHANT_NAME || branding.agencyName}`,
       note: data.notes || "Thank you for your business.",
       send_to_invoicer: true,
       send_to_recipient: true,
