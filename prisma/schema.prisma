@@ -93,10 +93,11 @@ model EsAuditLog {
 }
 
 model PaypalInvoice {
-  id                String    @id @default(uuid())
-  userId            String
-  paypalInvoiceId   String    @unique
-  invoiceNumber     String
+  id                    String    @id @default(uuid())
+  userId                String
+  paypalInvoiceId       String    @unique
+  paypalInvoiceNumber   String?
+  invoiceNumber         String
   clientName        String
   clientEmail       String
   totalAmount       Float

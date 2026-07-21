@@ -9,11 +9,32 @@ export interface CreatePaypalInvoiceResult {
   localInvoiceId: string;
 }
 
+async function generatePaypalInvoiceNumber(): Promise<string> {
+  const token = await getAccessToken();
+  const res = await fetch(`${PAYPAL_API}/v2/invoicing/generate-next-invoice-number`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    throw new Error(`PayPal generate invoice number error (${res.status}): ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.invoice_number;
+}
+
 export async function createAndSendPaypalInvoice(
   data: InvoiceData,
   userId: string,
 ): Promise<CreatePaypalInvoiceResult> {
   const token = await getAccessToken();
+
+  const [paypalInvoiceNumber] = await Promise.all([
+    generatePaypalInvoiceNumber(),
+  ]);
 
   const subtotal = data.lineItems.reduce((s, li) => s + li.quantity * li.rate, 0);
 
@@ -34,7 +55,7 @@ export async function createAndSendPaypalInvoice(
     detail: {
       reference: data.invoiceNumber,
       invoice_date: data.issueDate,
-      invoice_number: data.invoiceNumber,
+      invoice_number: paypalInvoiceNumber,
       currency_code: "USD",
       note: data.notes || undefined,
       payment_term: {
@@ -105,6 +126,7 @@ export async function createAndSendPaypalInvoice(
     data: {
       userId,
       paypalInvoiceId,
+      paypalInvoiceNumber,
       invoiceNumber: data.invoiceNumber,
       clientName: data.clientName,
       clientEmail: data.clientEmail,
