@@ -306,6 +306,13 @@ export default function InvoicesPage() {
               {paypalState === "sending" ? "Sending…" : paypalState === "sent" ? "Sent via PayPal!" : "Send via PayPal Invoice"}
             </button>
 
+            {paypalState === "sent" && (
+              <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700 text-center">
+                Invoice sent via PayPal. View in{" "}
+                <a href="/paypal/status" className="text-green-800 font-medium underline">PayPal Invoices</a>.
+              </div>
+            )}
+
             {paypalState === "error" && paypalError && (
               <p className="text-xs text-red-500 text-center">{paypalError}</p>
             )}
