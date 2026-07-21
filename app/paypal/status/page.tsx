@@ -263,38 +263,57 @@ export default function PaypalStatusPage() {
                 <div className="p-8 text-center text-sm text-neutral-400">Loading...</div>
               ) : detailData ? (
                 <div className="p-4 space-y-3 text-sm">
-                  {[
-                    ["ID", selectedId],
-                    ["Status", detailData.status as string],
-                    ["Invoice Number", (detailData.detail as Record<string, unknown>)?.invoice_number as string],
-                    ["Reference", (detailData.detail as Record<string, unknown>)?.reference as string],
-                    ["Currency", (detailData.amount as Record<string, unknown>)?.currency_code as string],
-                    ["Total", (detailData.amount as Record<string, unknown>)?.value as string],
-                    ["Date", (detailData.detail as Record<string, unknown>)?.invoice_date as string],
-                    ["Due Date", (detailData.detail as Record<string, unknown>)?.payment_term?.due_date as string],
-                    ["Client", (detailData.primary_recipients as Array<Record<string, unknown>>)?.[0]?.billing_info?.name?.given_name as string],
-                    ["Client Email", (detailData.primary_recipients as Array<Record<string, unknown>>)?.[0]?.billing_info?.email_address as string],
-                    ["Created", detailData.create_time as string],
-                    ["Paid Date", (detailData.detail as Record<string, unknown>)?.paid_date as string],
-                  ].map(([label, value]) => (
-                    value ? (
-                      <div key={label} className="flex justify-between border-b border-neutral-50 pb-2">
-                        <span className="text-neutral-500">{label}</span>
-                        <span className="font-medium text-neutral-900 text-right max-w-[60%] break-all">{String(value)}</span>
-                      </div>
-                    ) : null
-                  ))}
-                  {(detailData.items as Array<Record<string, unknown>>)?.length > 0 && (
-                    <>
-                      <div className="font-bold text-neutral-900 pt-2">Line Items</div>
-                      {(detailData.items as Array<Record<string, unknown>>).map((item, i) => (
-                        <div key={i} className="flex justify-between text-xs border-b border-neutral-50 pb-1">
-                          <span>{item.name as string} × {item.quantity as string}</span>
-                          <span className="font-medium">{item.unit_amount?.currency_code as string} {item.unit_amount?.value as string}</span>
-                        </div>
-                      ))}
-                    </>
-                  )}
+                  {(() => {
+                    const d = detailData.detail as Record<string, unknown> | undefined;
+                    const amt = detailData.amount as Record<string, unknown> | undefined;
+                    const recipients = detailData.primary_recipients as Array<Record<string, unknown>> | undefined;
+                    const billing = recipients?.[0]?.billing_info as Record<string, unknown> | undefined;
+                    const payerName = billing?.name as Record<string, unknown> | undefined;
+                    const paymentTerm = d?.payment_term as Record<string, unknown> | undefined;
+                    const items = detailData.items as Array<Record<string, unknown>> | undefined;
+
+                    const fields: [string, string | undefined][] = [
+                      ["ID", selectedId],
+                      ["Status", detailData.status as string],
+                      ["Invoice Number", d?.invoice_number as string],
+                      ["Reference", d?.reference as string],
+                      ["Currency", amt?.currency_code as string],
+                      ["Total", amt?.value as string],
+                      ["Date", d?.invoice_date as string],
+                      ["Due Date", paymentTerm?.due_date as string],
+                      ["Client", payerName?.given_name as string],
+                      ["Client Email", billing?.email_address as string],
+                      ["Created", detailData.create_time as string],
+                      ["Paid Date", d?.paid_date as string],
+                    ];
+
+                    return (
+                      <>
+                        {fields.map(([label, value]) =>
+                          value ? (
+                            <div key={label} className="flex justify-between border-b border-neutral-50 pb-2">
+                              <span className="text-neutral-500">{label}</span>
+                              <span className="font-medium text-neutral-900 text-right max-w-[60%] break-all">{value}</span>
+                            </div>
+                          ) : null
+                        )}
+                        {items && items.length > 0 && (
+                          <>
+                            <div className="font-bold text-neutral-900 pt-2">Line Items</div>
+                            {items.map((item, i) => {
+                              const unitAmt = item.unit_amount as Record<string, unknown> | undefined;
+                              return (
+                                <div key={i} className="flex justify-between text-xs border-b border-neutral-50 pb-1">
+                                  <span>{item.name as string} × {item.quantity as string}</span>
+                                  <span className="font-medium">{unitAmt?.currency_code as string} {unitAmt?.value as string}</span>
+                                </div>
+                              );
+                            })}
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div className="p-8 text-center text-sm text-red-500">Failed to load details</div>
