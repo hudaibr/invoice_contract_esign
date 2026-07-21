@@ -17,7 +17,7 @@ async function generatePaypalInvoiceNumber(): Promise<string> {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({}),
+    body: JSON.stringify({ fetch_id: true }),
   });
   if (!res.ok) {
     throw new Error(`PayPal generate invoice number error (${res.status}): ${await res.text()}`);
