@@ -202,7 +202,7 @@ export async function cancelPaypalInvoice(paypalInvoiceId: string) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ send_to_invoicer: true, send_to_recipient: true }),
+    body: "{}",
   });
 
   if (!res.ok) {
@@ -219,6 +219,17 @@ export async function cancelPaypalInvoice(paypalInvoiceId: string) {
 
 export async function deletePaypalInvoice(paypalInvoiceId: string) {
   const token = await getAccessToken();
+
+  // Cancel first (required by PayPal before deletion)
+  await fetch(`${PAYPAL_API}/v2/invoicing/invoices/${paypalInvoiceId}/cancel`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: "{}",
+  }).catch(() => {});
+
   const res = await fetch(`${PAYPAL_API}/v2/invoicing/invoices/${paypalInvoiceId}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },

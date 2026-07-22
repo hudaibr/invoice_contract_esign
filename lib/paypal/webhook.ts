@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function verifyWebhookSignature(
   headers: Record<string, string>,
-  body: string,
+  event: unknown,
 ): Promise<boolean> {
   const webhookId = process.env.PAYPAL_WEBHOOK_ID;
   if (!webhookId) return false;
@@ -23,7 +23,7 @@ export async function verifyWebhookSignature(
       transmission_sig: headers["paypal-transmission-sig"],
       transmission_time: headers["paypal-transmission-time"],
       webhook_id: webhookId,
-      webhook_event: JSON.parse(body),
+      webhook_event: event,
     }),
   });
 

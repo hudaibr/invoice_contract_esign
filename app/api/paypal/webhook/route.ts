@@ -9,12 +9,12 @@ export async function POST(req: NextRequest) {
       headers[key.toLowerCase()] = value;
     });
 
-    const isValid = await verifyWebhookSignature(headers, body);
+    const event = JSON.parse(body);
+    const isValid = await verifyWebhookSignature(headers, event);
     if (!isValid) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    const event = JSON.parse(body);
     await handleInvoiceWebhook(event);
     return NextResponse.json({ received: true });
   } catch {
