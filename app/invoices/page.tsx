@@ -50,6 +50,7 @@ export default function InvoicesPage() {
     { id: uid(), description: "", quantity: 1, rate: 0 },
   ]);
 
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [sendError, setSendError] = useState("");
   const [paypalState, setPaypalState] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -102,6 +103,9 @@ export default function InvoicesPage() {
           <div className="flex items-center gap-4">
             <a href="/contracts" className="text-sm text-[#3FBB43] hover:underline">
               Contracts
+            </a>
+            <a href="/invoices/status" className="text-sm text-[#3FBB43] hover:underline">
+              My Invoices
             </a>
             <a href="/paypal/status" className="text-sm text-[#3FBB43] hover:underline">
               PayPal Invoices
@@ -244,29 +248,53 @@ export default function InvoicesPage() {
               </PDFDownloadLink>
             </div>
 
-            <button
-              onClick={async () => {
-                if (!clientEmail.trim()) {
-                  setSendState("error");
-                  setSendError("Client email is required");
-                  return;
-                }
-                setSendState("sending");
-                setSendError("");
-                const result = await sendInvoiceEmail(invoiceData);
-                if (result.success) {
-                  setSendState("sent");
-                } else {
-                  setSendState("error");
-                  setSendError(result.error ?? "Failed to send");
-                }
-              }}
-              disabled={sendState === "sending" || sendState === "sent"}
-              className="w-full flex items-center justify-center gap-2 rounded-lg border border-[#3FBB43] text-[#3FBB43] py-2.5 text-sm font-medium hover:bg-[#3FBB43] hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Send size={16} />
-              {sendState === "sending" ? "Sending…" : sendState === "sent" ? "Sent!" : "Send Invoice via Email"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  setSaveState("saving");
+                  try {
+                    const res = await fetch("/api/invoices", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(invoiceData),
+                    });
+                    setSaveState(res.ok ? "saved" : "error");
+                  } catch { setSaveState("error"); }
+                }}
+                disabled={saveState === "saving" || saveState === "saved"}
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-neutral-300 text-neutral-600 py-2.5 text-sm font-medium hover:bg-neutral-50 transition disabled:opacity-40"
+              >
+                {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved!" : "Save Invoice"}
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!clientEmail.trim()) {
+                    setSendState("error");
+                    setSendError("Client email is required");
+                    return;
+                  }
+                  await fetch("/api/invoices", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(invoiceData),
+                  }).catch(() => {});
+                  setSendState("sending");
+                  setSendError("");
+                  const result = await sendInvoiceEmail(invoiceData);
+                  if (result.success) {
+                    setSendState("sent");
+                  } else {
+                    setSendState("error");
+                    setSendError(result.error ?? "Failed to send");
+                  }
+                }}
+                disabled={sendState === "sending" || sendState === "sent"}
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-[#3FBB43] text-[#3FBB43] py-2.5 text-sm font-medium hover:bg-[#3FBB43] hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Send size={16} />
+                {sendState === "sending" ? "Sending…" : sendState === "sent" ? "Sent!" : "Send via Email"}
+              </button>
+            </div>
 
             {sendState === "error" && sendError && (
               <p className="text-xs text-red-500 text-center">{sendError}</p>
@@ -279,6 +307,10 @@ export default function InvoicesPage() {
                   setPaypalError("Client email is required");
                   return;
                 }
+                await fetch("/api/invoices", {
+                  method: "POST", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(invoiceData),
+                }).catch(() => {});
                 setPaypalState("sending");
                 setPaypalError("");
                 try {
