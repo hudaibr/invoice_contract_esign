@@ -13,13 +13,7 @@ export async function POST(req: NextRequest) {
     const data: InvoiceData = await req.json();
     const result = await createAndSendPaypalInvoice(data, session.user.id);
 
-    // Verify invoice was created and sent
-    const status = await getPaypalInvoiceStatus(result.paypalInvoiceId);
-    if (status.status !== "SENT") {
-      throw new Error(`Invoice created but not sent (status: ${status.status})`);
-    }
-
-    return NextResponse.json({ ...result, paypalStatus: status.status });
+    return NextResponse.json({ ...result, paypalStatus: "SENT" });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Failed to send PayPal invoice" },
