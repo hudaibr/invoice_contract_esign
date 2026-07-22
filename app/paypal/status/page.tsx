@@ -147,18 +147,18 @@ export default function PaypalStatusPage() {
           </div>
           <div className="flex items-center gap-4">
             <button onClick={fetchFromPaypal} disabled={paypalList} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900">
-              <List size={14} /> {paypalList ? "Syncing..." : "Sync from PayPal"}
+              <List size={18} /> {paypalList ? "Syncing..." : "Sync from PayPal"}
             </button>
             <button onClick={setupReminders} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900">
-              <Bell size={14} /> Auto Reminders
+              <Bell size={18} /> Auto Reminders
             </button>
             <button onClick={fetchInvoices} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900">
-              <RefreshCw size={14} /> Refresh
+              <RefreshCw size={18} /> Refresh
             </button>
             <a href="/invoices" className="text-sm text-[#3FBB43] hover:underline">Invoices</a>
             <form action={signOutAction}>
               <button className="text-sm text-neutral-400 hover:text-red-500 flex items-center gap-1">
-                <LogOut size={14} /> Sign Out
+                <LogOut size={18} /> Sign Out
               </button>
             </form>
           </div>
@@ -223,21 +223,21 @@ export default function PaypalStatusPage() {
                       <td className="px-4 py-3">
                         <div className="flex gap-1 flex-wrap">
                           <button onClick={() => showDetails(inv.paypalInvoiceId)} className="p-1 text-neutral-400 hover:text-blue-600" title="View Details">
-                            <Eye size={14} />
+                            <Eye size={18} />
                           </button>
                           {inv.paypalLink && (
                             <a href={inv.paypalLink} target="_blank" className="p-1 text-neutral-400 hover:text-[#0070BA]" title="View on PayPal">
-                              <Send size={14} />
+                              <Send size={18} />
                             </a>
                           )}
                           <button onClick={() => doAction("cancel", inv.paypalInvoiceId)} className="p-1 text-neutral-400 hover:text-red-600" title="Cancel">
-                            <XCircle size={14} />
+                            <XCircle size={18} />
                           </button>
                           <button onClick={() => doAction("remind", inv.paypalInvoiceId)} className="p-1 text-neutral-400 hover:text-blue-600" title="Send Reminder">
-                            <Bell size={14} />
+                            <Bell size={18} />
                           </button>
                           <button onClick={() => doAction("delete", inv.paypalInvoiceId)} className="p-1 text-neutral-400 hover:text-red-600" title="Delete">
-                            <Trash2 size={14} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </td>

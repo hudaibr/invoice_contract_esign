@@ -84,13 +84,13 @@ export default function InvoicesStatusPage() {
           </div>
           <div className="flex items-center gap-4">
             <button onClick={fetchInvoices} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900">
-              <RefreshCw size={14} /> Refresh
+              <RefreshCw size={18} /> Refresh
             </button>
             <a href="/invoices" className="text-sm text-[#3FBB43] hover:underline">New Invoice</a>
             <a href="/paypal/status" className="text-sm text-[#3FBB43] hover:underline">PayPal</a>
             <form action={signOutAction}>
               <button className="text-sm text-neutral-400 hover:text-red-500 flex items-center gap-1">
-                <LogOut size={14} /> Sign Out
+                <LogOut size={18} /> Sign Out
               </button>
             </form>
           </div>
@@ -136,7 +136,7 @@ export default function InvoicesStatusPage() {
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
                           <button onClick={() => setSelectedInvoice(inv)} className="p-1 text-neutral-400 hover:text-blue-600" title="View">
-                            <Eye size={14} />
+                            <Eye size={18} />
                           </button>
                           <button
                             onClick={() => sendPaypal(inv)}
@@ -144,10 +144,10 @@ export default function InvoicesStatusPage() {
                             className="p-1 text-neutral-400 hover:text-[#0070BA] disabled:opacity-40"
                             title="Send via PayPal"
                           >
-                            <CreditCard size={14} />
+                            <CreditCard size={18} />
                           </button>
                           <button onClick={() => deleteInvoice(inv.id)} className="p-1 text-neutral-400 hover:text-red-600" title="Delete">
-                            <Trash2 size={14} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </td>
@@ -198,7 +198,7 @@ export default function InvoicesStatusPage() {
                     disabled={sendingId === selectedInvoice.id}
                     className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-[#0070BA] text-white py-2 text-sm font-medium hover:bg-[#005a94] transition disabled:opacity-40"
                   >
-                    <CreditCard size={14} /> Send via PayPal
+                    <CreditCard size={18} /> Send via PayPal
                   </button>
                 </div>
               </div>
