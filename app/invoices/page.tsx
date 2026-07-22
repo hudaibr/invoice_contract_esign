@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { branding } from "@/lib/branding";
 import type { InvoiceData, InvoiceLineItem } from "@/lib/types";
@@ -37,6 +37,20 @@ function addDays(dateStr: string, days: number) {
 
 export default function InvoicesPage() {
   const [invoiceNumber, setInvoiceNumber] = useState(`INV-${new Date().getFullYear()}-001`);
+
+  useEffect(() => {
+    fetch("/api/invoices").then((r) => r.ok ? r.json() : []).then((list) => {
+      const year = new Date().getFullYear();
+      const prefix = `INV-${year}-`;
+      const maxSeq = (list as Array<{ invoiceNumber: string }>)
+        .filter((i) => i.invoiceNumber.startsWith(prefix))
+        .reduce((max, i) => {
+          const n = parseInt(i.invoiceNumber.slice(prefix.length), 10);
+          return isNaN(n) ? max : Math.max(max, n);
+        }, 0);
+      setInvoiceNumber(`${prefix}${(maxSeq + 1).toString().padStart(3, "0")}`);
+    }).catch(() => {});
+  }, []);
   const [issueDate, setIssueDate] = useState(todayISO());
   const [dueDate, setDueDate] = useState(addDays(todayISO(), branding.invoice.defaultDueDays));
   const [clientName, setClientName] = useState("");
