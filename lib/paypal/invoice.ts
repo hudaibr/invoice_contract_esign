@@ -59,8 +59,7 @@ export async function createAndSendPaypalInvoice(
       currency_code: "USD",
       note: data.notes || undefined,
       payment_term: {
-        term_type: "DUE_ON_DATE_SPECIFIED",
-        due_date: data.dueDate,
+        term_type: "DUE_ON_RECEIPT",
       },
     },
     invoicer: {
