@@ -54,7 +54,6 @@ export async function createAndSendPaypalInvoice(
   const invoicePayload: Record<string, unknown> = {
     detail: {
       reference: data.invoiceNumber,
-      invoice_date: data.issueDate,
       invoice_number: paypalInvoiceNumber,
       currency_code: "USD",
       note: data.notes || undefined,
