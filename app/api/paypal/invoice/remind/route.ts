@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
     const { paypalInvoiceId } = await req.json();
     const result = await remindPaypalInvoice(paypalInvoiceId);
     return NextResponse.json(result);
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to send reminder" },
+      { error: "Failed to send reminder" },
       { status: 500 },
     );
   }

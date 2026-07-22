@@ -13,9 +13,9 @@ export async function POST(req: NextRequest) {
   try {
     const result = await setupPaypalReminders();
     return NextResponse.json(result);
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to setup reminders" },
+      { error: "Failed to setup reminders" },
       { status: 500 },
     );
   }

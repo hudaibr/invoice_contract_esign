@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
     const { paypalInvoiceId } = await req.json();
     await deletePaypalInvoice(paypalInvoiceId);
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to delete" },
+      { error: "Failed to delete invoice" },
       { status: 500 },
     );
   }

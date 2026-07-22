@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
     const { paypalInvoiceId } = await req.json();
     const result = await cancelPaypalInvoice(paypalInvoiceId);
     return NextResponse.json(result);
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to cancel" },
+      { error: "Failed to cancel invoice" },
       { status: 500 },
     );
   }

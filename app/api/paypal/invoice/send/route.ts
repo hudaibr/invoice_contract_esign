@@ -19,9 +19,9 @@ export async function POST(req: NextRequest) {
     const result = await createAndSendPaypalInvoice(data, session.user.id);
 
     return NextResponse.json({ ...result, paypalStatus: "SENT" });
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to send PayPal invoice" },
+      { error: "Failed to send PayPal invoice" },
       { status: 500 },
     );
   }

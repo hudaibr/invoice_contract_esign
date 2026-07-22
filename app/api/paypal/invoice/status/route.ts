@@ -22,9 +22,9 @@ export async function GET(req: NextRequest) {
     try {
       const paypalData = await getPaypalInvoiceStatus(paypalId);
       return NextResponse.json(paypalData);
-    } catch (e) {
+    } catch {
       return NextResponse.json(
-        { error: e instanceof Error ? e.message : "Failed to fetch status" },
+        { error: "Failed to fetch status" },
         { status: 500 },
       );
     }
@@ -34,9 +34,9 @@ export async function GET(req: NextRequest) {
     try {
       const paypalInvoices = await listPaypalInvoices();
       return NextResponse.json(paypalInvoices);
-    } catch (e) {
+    } catch {
       return NextResponse.json(
-        { error: e instanceof Error ? e.message : "Failed to list PayPal invoices" },
+        { error: "Failed to list PayPal invoices" },
         { status: 500 },
       );
     }

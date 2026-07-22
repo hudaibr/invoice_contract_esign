@@ -114,8 +114,8 @@ export async function createAndSendPaypalInvoice(
   if (!paypalInvoiceId) {
     throw new Error(`PayPal create invoice response missing ID: ${JSON.stringify(created)}`);
   }
-  const paypalLink = created.links?.find((l: { rel: string }) => l.rel === "self")?.href
-    ?? created.href ?? created.invoice_url ?? "";
+  const paypalLink = created.links?.find((l: { rel: string }) => l.rel === "invoice_url")?.href
+    ?? created.invoice_url ?? "";
 
   const totalAmount = subtotal + (subtotal * data.taxRate / 100);
 
@@ -251,7 +251,7 @@ export async function remindPaypalInvoice(paypalInvoiceId: string) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ send_to_invoicer: true }),
+    body: JSON.stringify({ send_to_invoicer: true, send_to_recipient: true }),
   });
 
   if (!res.ok) {
@@ -261,7 +261,11 @@ export async function remindPaypalInvoice(paypalInvoiceId: string) {
   return res.json();
 }
 
+let remindersConfigured = false;
+
 export async function setupPaypalReminders() {
+  if (remindersConfigured) return { already_configured: true };
+
   const token = await getAccessToken();
   const res = await fetch(`${PAYPAL_API}/v2/invoicing/setup-reminders`, {
     method: "POST",
@@ -281,5 +285,6 @@ export async function setupPaypalReminders() {
     throw new Error(`PayPal setup reminders error (${res.status}): ${await res.text()}`);
   }
 
+  remindersConfigured = true;
   return res.json();
 }

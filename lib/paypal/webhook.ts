@@ -1,6 +1,8 @@
 import { getAccessToken, PAYPAL_API } from "./auth";
 import { prisma } from "@/lib/prisma";
 
+const processedEvents = new Set<string>();
+
 export async function verifyWebhookSignature(
   headers: Record<string, string>,
   event: unknown,
@@ -33,6 +35,7 @@ export async function verifyWebhookSignature(
 }
 
 export async function handleInvoiceWebhook(event: {
+  id: string;
   event_type: string;
   resource: {
     id: string;
@@ -41,10 +44,13 @@ export async function handleInvoiceWebhook(event: {
     detail?: { paid_date?: string };
   };
 }) {
+  if (processedEvents.has(event.id)) return;
+  processedEvents.add(event.id);
+
   const { event_type, resource } = event;
 
   if (event_type === "INVOICING.INVOICE.PAID") {
-    await prisma.paypalInvoice.update({
+    await prisma.paypalInvoice.updateMany({
       where: { paypalInvoiceId: resource.id },
       data: {
         status: "PAID",
@@ -56,7 +62,7 @@ export async function handleInvoiceWebhook(event: {
   }
 
   if (event_type === "INVOICING.INVOICE.CANCELLED") {
-    await prisma.paypalInvoice.update({
+    await prisma.paypalInvoice.updateMany({
       where: { paypalInvoiceId: resource.id },
       data: { status: "CANCELLED" },
     });
@@ -64,7 +70,7 @@ export async function handleInvoiceWebhook(event: {
   }
 
   if (event_type === "INVOICING.INVOICE.REFUNDED") {
-    await prisma.paypalInvoice.update({
+    await prisma.paypalInvoice.updateMany({
       where: { paypalInvoiceId: resource.id },
       data: { status: "REFUNDED" },
     });
