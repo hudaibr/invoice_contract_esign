@@ -109,14 +109,19 @@ export async function POST(req: NextRequest) {
           : new Date();
 
         try {
-          const existing = await prisma.ncpPayment.findUnique({ where: { paypalCaptureId: captureId } });
-          if (existing) {
+          const alreadyExists = await prisma.ncpPayment.findUnique({
+            where: { paypalCaptureId: captureId },
+            select: { id: true },
+          });
+          if (alreadyExists) {
             result.skipped++;
             continue;
           }
 
-          await prisma.ncpPayment.create({
-            data: {
+          const payload = JSON.parse(JSON.stringify(tx));
+          await prisma.ncpPayment.upsert({
+            where: { paypalCaptureId: captureId },
+            create: {
               customerName,
               customerEmail,
               amount,
@@ -125,8 +130,9 @@ export async function POST(req: NextRequest) {
               paypalCartId: cartId,
               paypalCaptureId: captureId,
               paidAt,
-              rawPayload: JSON.parse(JSON.stringify(tx)),
+              rawPayload: payload,
             },
+            update: {},
           });
           result.synced++;
         } catch (e) {

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { branding } from "@/lib/branding";
-import { StatusBadge } from "@/components/esign/status-badge";
-import { LogOut, Search, RefreshCw, Download, Calendar, X } from "lucide-react";
+import { NcpStatusBadge } from "@/components/ncp/status-badge";
+import { LogOut, Search, RefreshCw, Download, X } from "lucide-react";
 import { signOutAction } from "@/lib/actions";
 
 interface NcpPayment {
@@ -42,10 +42,6 @@ const STATUS_OPTIONS = [
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function formatDateTime(dateStr: string) {
@@ -270,7 +266,7 @@ export default function NcpPaymentsPage() {
                         <td className="py-3 px-4 text-sm font-semibold text-neutral-900 text-right">{formatCurrency(p.amount, p.currencyCode)}</td>
                         <td className="py-3 px-4 text-sm text-neutral-500 font-mono">{p.paypalCartId}</td>
                         <td className="py-3 px-4 text-sm text-neutral-500 font-mono truncate max-w-[140px]" title={p.paypalCaptureId}>{p.paypalCaptureId}</td>
-                        <td className="py-3 px-4"><StatusBadge status={p.status} /></td>
+                        <td className="py-3 px-4"><NcpStatusBadge status={p.status} /></td>
                       </tr>
                     ))}
                   </tbody>
