@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
               paypalCartId: cartId,
               paypalCaptureId: captureId,
               paidAt,
-              rawPayload: tx,
+              rawPayload: tx as Record<string, unknown>,
             },
           });
           result.synced++;
