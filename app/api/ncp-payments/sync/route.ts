@@ -95,9 +95,11 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        const payer = tx.payer_info ?? {};
-        const customerName = `${payer.first_name ?? ""} ${payer.last_name ?? ""}`.trim() || "Unknown Client";
-        const customerEmail = payer.email_address ?? "unknown@example.com";
+        const payer = tx.payer_info;
+        const customerName = payer
+          ? `${payer.first_name ?? ""} ${payer.last_name ?? ""}`.trim() || "Unknown Client"
+          : "Unknown Client";
+        const customerEmail = payer?.email_address ?? "unknown@example.com";
         const amountInfo = tx.transaction_info?.transaction_amount ?? { value: "0", currency_code: "USD" };
         const amount = Number(amountInfo.value ?? 0);
         const currencyCode = amountInfo.currency_code ?? "USD";
