@@ -135,3 +135,21 @@ model PaypalInvoice {
 
   @@map("paypal_invoices")
 }
+
+model NcpPayment {
+  id                String   @id @default(uuid())
+  customerName      String
+  customerEmail     String
+  amount            Float
+  currencyCode      String   @default("USD")
+  status            String   @default("COMPLETED")
+  paypalCartId      String   @unique
+  paypalCaptureId   String   @unique
+  paidAt            DateTime
+  rawPayload        Json?
+  createdAt         DateTime @default(now())
+
+  @@index([customerEmail])
+  @@index([paidAt])
+  @@map("ncp_payments")
+}

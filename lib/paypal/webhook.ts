@@ -6,9 +6,10 @@ const processedEvents = new Set<string>();
 export async function verifyWebhookSignature(
   headers: Record<string, string>,
   event: unknown,
+  webhookId?: string
 ): Promise<boolean> {
-  const webhookId = process.env.PAYPAL_WEBHOOK_ID;
-  if (!webhookId) return false;
+  const effectiveWebhookId = webhookId ?? process.env.PAYPAL_WEBHOOK_ID;
+  if (!effectiveWebhookId) return false;
 
   const token = await getAccessToken();
 

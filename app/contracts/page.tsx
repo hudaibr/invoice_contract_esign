@@ -116,6 +116,9 @@ export default function ContractsPage() {
             <a href="/contracts/status" className="text-sm text-[#3FBB43] hover:underline">
               Contract Status
             </a>
+            <a href="/ncp-payments" className="text-sm text-[#3FBB43] hover:underline">
+              NCP Payments
+            </a>
             <form action={signOutAction}>
               <button className="text-sm text-neutral-400 hover:text-red-500 flex items-center gap-1">
                 <LogOut size={14} /> Sign Out
